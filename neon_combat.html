@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Combat Arena</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        body {
+            background: #000;
+            font-family: 'Courier New', monospace;
+            color: #0f0;
+        }
+
+        canvas {
+            display: block;
+            cursor: none;
+        }
+
+        #fakeDocument {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            padding: 40px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        #fakeDocument.active {
+            display: block;
+            cursor: default;
+        }
+
+        .doc-header {
+            font-family: Arial, sans-serif;
+            color: #000;
+            margin-bottom: 30px;
+        }
+
+        .doc-content {
+            font-family: 'Times New Roman', serif;
+            color: #000;
+            line-height: 1.8;
+            max-width: 800px;
+        }
+
+        .doc-content h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #000;
+        }
+
+        .doc-content h2 {
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        .doc-content p {
+            margin-bottom: 15px;
+            text-align: justify;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .doc-content ul {
+            margin-left: 30px;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 14px;
+            line-height: 2;
+        }
+
+        .doc-content .formula {
+            font-family: 'Courier New', monospace;
+            background: #f4f4f4;
+            padding: 8px 14px;
+            margin: 10px 0;
+            border-left: 3px solid #999;
+            display: block;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="fakeDocument">
+        <div class="doc-header">
+            <h1 style="color:#000;">ECON 201 — Principles of Microeconomics</h1>
+            <p style="color:#555;"><strong>Chapter 4 Study Guide — Elasticity and Its Applications</strong></p>
+            <p style="color:#777;">Professor Williams | Spring 2024 | Pages 87–112</p>
+            <hr style="border:1px solid #ccc; margin: 15px 0;">
+        </div>
+        <div class="doc-content">
+            <h2>4.1 Price Elasticity of Demand</h2>
+            <p>Price elasticity of demand measures how much the quantity demanded of a good responds to a change in the price of that good. It is computed as the percentage change in quantity demanded divided by the percentage change in price. Goods with close substitutes tend to have more elastic demand because it is easier for consumers to switch from that good to others.</p>
+            <span class="formula">E<sub>d</sub> = (% Change in Q<sub>d</sub>) / (% Change in P)</span>
+            <p>Demand is considered <strong>elastic</strong> when the elasticity is greater than 1, meaning quantity responds substantially to price changes. It is <strong>inelastic</strong> when elasticity is less than 1, meaning quantity is relatively unresponsive to price.</p>
+
+            <h2>4.2 Determinants of Elasticity</h2>
+            <ul>
+                <li><strong>Availability of substitutes</strong> — More substitutes = more elastic</li>
+                <li><strong>Necessities vs. luxuries</strong> — Necessities tend to be inelastic</li>
+                <li><strong>Definition of the market</strong> — Narrowly defined markets have more elastic demand</li>
+                <li><strong>Time horizon</strong> — Demand is more elastic over longer time periods</li>
+            </ul>
+
+            <h2>4.3 Total Revenue and Elasticity</h2>
+            <p>Total revenue is the amount paid by buyers and received by sellers, computed as price times quantity (TR = P × Q). When demand is inelastic, a price increase raises total revenue. When demand is elastic, a price increase reduces total revenue because the fall in quantity more than offsets the higher price.</p>
+            <span class="formula">TR = P × Q</span>
+
+            <h2>4.4 Income Elasticity and Cross-Price Elasticity</h2>
+            <p>Income elasticity of demand measures how the quantity demanded changes as consumer income changes. Normal goods have positive income elasticity. Inferior goods have negative income elasticity. Cross-price elasticity measures how demand for one good changes when the price of another good changes. Substitutes have positive cross-price elasticity; complements have negative cross-price elasticity.</p>
+
+            <h2>4.5 Elasticity of Supply</h2>
+            <p>Price elasticity of supply measures how much the quantity supplied responds to changes in price. Supply is generally more elastic in the long run because firms can adjust their production capacity. In the short run, supply tends to be more inelastic because firms cannot easily change the scale of production.</p>
+
+            <h2>Key Terms for Exam Review</h2>
+            <ul>
+                <li>Price elasticity of demand &amp; supply</li>
+                <li>Midpoint method for computing elasticity</li>
+                <li>Perfectly elastic / perfectly inelastic</li>
+                <li>Unit elastic demand</li>
+                <li>Total revenue test</li>
+                <li>Income elasticity (normal vs. inferior goods)</li>
+                <li>Cross-price elasticity (substitutes vs. complements)</li>
+            </ul>
+            <p><em>Note: Chapter 4 problem sets are due Friday. Review questions 4.3, 4.7, 4.12, and 4.15 from the textbook.</em></p>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================
+        // NEON COMBAT ARENA — Disposable Weapons Edition
+        // =========================================================
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const fakeDoc = document.getElementById('fakeDocument');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Prevent default scrolling for game keys
+        window.addEventListener('keydown', (e) => {
+            if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.code)) {
+                e.preventDefault();
+            }
+        }, false);
+
+        // =========================================================
+        // CONSTANTS
+        // =========================================================
+        const PLAYER_SIZE = 18;
+        const SWORD_LENGTH = 44;
+        const SWORD_WIDTH = 3;
+        const SHIELD_RADIUS = 32;
+        const SHIELD_ARC = Math.PI / 2.5;
+        const SWORD_SWING_SPEED = 0.18;
+        const KNOCKBACK_FORCE = 22;
+        const SHATTER_KNOCKBACK = 35;
+        const RESPAWN_DELAY = 1200;
+        const MOVE_SPEED = 4.5;
+        const FRICTION = 0.88;
+        const ORB_SPAWN_MIN = 1800;
+        const ORB_SPAWN_MAX = 3200;
+        const ORB_SIZE = 12;
+        const ORB_PICKUP_DIST = 30;
+        const MAX_ORBS = 8;
+        const GRID_SIZE = 60;
+
+        // =========================================================
+        // INPUT — Tracks keys by e.code for no conflicts
+        // =========================================================
+        const keysDown = {};
+
+        window.addEventListener('keydown', (e) => {
+            keysDown[e.code] = true;
+
+            // Panic key
+            if (e.code === 'Escape') {
+                fakeDoc.classList.toggle('active');
+            }
+
+            // P2 attack — Space
+            if (e.code === 'Space') {
+                trySwing(players[1]);
+            }
+
+            // P3 attack — Enter
+            if (e.code === 'Enter') {
+                trySwing(players[2]);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keysDown[e.code] = false;
+        });
+
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        window.addEventListener('mousedown', () => {
+            trySwing(players[0]);
+        });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // =========================================================
+        // PLAYERS
+        // =========================================================
+        function createPlayer(id, name, shape, color, x, y) {
+            return {
+                id, name, shape, color,
+                x, y,
+                vx: 0, vy: 0,
+                // Disposable items
+                hasSword: false,
+                hasShield: false,
+                // Swing state
+                swinging: false,
+                swingProgress: 0,
+                swordBaseAngle: 0,
+                // Shield visual angle (faces nearest enemy)
+                shieldAngle: 0,
+                // Score
+                score: 0,
+                alive: true,
+                respawnTime: 0,
+                // Flash effect on pickup
+                flashTimer: 0,
+                flashColor: '#fff'
+            };
+        }
+
+        const players = [
+            createPlayer(1, 'Ghost', 'cursor', '#ffffff',
+                canvas.width / 4, canvas.height / 2),
+            createPlayer(2, 'Tank', 'square', '#00ffff',
+                canvas.width / 2, canvas.height / 2),
+            createPlayer(3, 'Striker', 'triangle', '#ff0066',
+                canvas.width * 3 / 4, canvas.height / 2)
+        ];
+
+        // =========================================================
+        // ORBS (Power-ups)
+        // =========================================================
+        const orbs = [];
+        let nextOrbSpawn = Date.now() + 1000; // first orb comes fast
+
+        function spawnOrb() {
+            if (orbs.length >= MAX_ORBS) return;
+            const type = Math.random() < 0.5 ? 'sword' : 'shield';
+            const margin = 60;
+            orbs.push({
+                x: Math.random() * (canvas.width - margin * 2) + margin,
+                y: Math.random() * (canvas.height - margin * 2) + margin,
+                type,
+                pulse: 0,
+                spawnTime: Date.now()
+            });
+        }
+
+        function scheduleNextOrb() {
+            nextOrbSpawn = Date.now() + ORB_SPAWN_MIN + Math.random() * (ORB_SPAWN_MAX - ORB_SPAWN_MIN);
+        }
+
+        // =========================================================
+        // PARTICLES
+        // =========================================================
+        const particles = [];
+
+        function spawnParticles(x, y, color, count, speed) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const spd = (Math.random() * 0.6 + 0.4) * speed;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * spd,
+                    vy: Math.sin(angle) * spd,
+                    life: 1.0,
+                    decay: 0.015 + Math.random() * 0.02,
+                    size: 2 + Math.random() * 3,
+                    color
+                });
+            }
+        }
+
+        function spawnShatterParticles(x, y, color) {
+            // Big dramatic shatter
+            spawnParticles(x, y, color, 20, 8);
+            spawnParticles(x, y, '#ffffff', 8, 5);
+        }
+
+        // =========================================================
+        // CORE MECHANICS
+        // =========================================================
+
+        function trySwing(player) {
+            if (!player.alive || !player.hasSword || player.swinging) return;
+            player.swinging = true;
+            player.swingProgress = 0;
+            // Set sword base angle toward nearest enemy
+            player.swordBaseAngle = getNearestEnemyAngle(player);
+        }
+
+        function getNearestEnemyAngle(player) {
+            let nearestDist = Infinity;
+            let angle = 0;
+            for (const other of players) {
+                if (other.id === player.id || !other.alive) continue;
+                const dx = other.x - player.x;
+                const dy = other.y - player.y;
+                const dist = dx * dx + dy * dy;
+                if (dist < nearestDist) {
+                    nearestDist = dist;
+                    angle = Math.atan2(dy, dx);
+                }
+            }
+            return angle;
+        }
+
+        function updateShieldAngle(player) {
+            if (!player.hasShield) return;
+            let nearestDist = Infinity;
+            let nearestAngle = player.shieldAngle;
+            for (const other of players) {
+                if (other.id === player.id || !other.alive) continue;
+                const dx = other.x - player.x;
+                const dy = other.y - player.y;
+                const dist = dx * dx + dy * dy;
+                if (dist < nearestDist) {
+                    nearestDist = dist;
+                    nearestAngle = Math.atan2(dy, dx);
+                }
+            }
+            // Smooth rotation toward target
+            let diff = nearestAngle - player.shieldAngle;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            player.shieldAngle += diff * 0.15;
+        }
+
+        function updatePlayer(player) {
+            if (!player.alive) {
+                if (Date.now() >= player.respawnTime) {
+                    respawnPlayer(player);
+                }
+                return;
+            }
+
+            // Flash timer
+            if (player.flashTimer > 0) player.flashTimer -= 0.05;
+
+            // --- Movement ---
+            if (player.id === 1) {
+                // Ghost: mouse controls position directly
+                // Smooth interpolation toward cursor
+                player.x += (mouseX - player.x) * 0.35;
+                player.y += (mouseY - player.y) * 0.35;
+            } else if (player.id === 2) {
+                // Tank: WASD (using e.code)
+                let ax = 0, ay = 0;
+                if (keysDown['KeyW']) ay = -1;
+                if (keysDown['KeyS']) ay = 1;
+                if (keysDown['KeyA']) ax = -1;
+                if (keysDown['KeyD']) ax = 1;
+                if (ax !== 0 && ay !== 0) {
+                    const inv = 1 / Math.SQRT2;
+                    ax *= inv;
+                    ay *= inv;
+                }
+                player.vx += ax * 1.2;
+                player.vy += ay * 1.2;
+            } else if (player.id === 3) {
+                // Striker: Arrow keys (using e.code)
+                let ax = 0, ay = 0;
+                if (keysDown['ArrowUp']) ay = -1;
+                if (keysDown['ArrowDown']) ay = 1;
+                if (keysDown['ArrowLeft']) ax = -1;
+                if (keysDown['ArrowRight']) ax = 1;
+                if (ax !== 0 && ay !== 0) {
+                    const inv = 1 / Math.SQRT2;
+                    ax *= inv;
+                    ay *= inv;
+                }
+                player.vx += ax * 1.2;
+                player.vy += ay * 1.2;
+            }
+
+            // Clamp speed
+            const speed = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
+            if (speed > MOVE_SPEED) {
+                player.vx = (player.vx / speed) * MOVE_SPEED;
+                player.vy = (player.vy / speed) * MOVE_SPEED;
+            }
+
+            // Apply velocity + friction
+            player.x += player.vx;
+            player.y += player.vy;
+            player.vx *= FRICTION;
+            player.vy *= FRICTION;
+
+            // Bounds
+            player.x = Math.max(PLAYER_SIZE, Math.min(canvas.width - PLAYER_SIZE, player.x));
+            player.y = Math.max(PLAYER_SIZE, Math.min(canvas.height - PLAYER_SIZE, player.y));
+
+            // Shield faces nearest enemy
+            updateShieldAngle(player);
+
+            // Sword swing
+            if (player.swinging) {
+                player.swingProgress += SWORD_SWING_SPEED;
+                if (player.swingProgress >= Math.PI * 1.5) {
+                    // Swing complete — sword consumed
+                    player.swinging = false;
+                    player.swingProgress = 0;
+                    player.hasSword = false;
+                }
+            }
+        }
+
+        function checkOrbPickups() {
+            for (let i = orbs.length - 1; i >= 0; i--) {
+                const orb = orbs[i];
+                for (const player of players) {
+                    if (!player.alive) continue;
+                    const dx = orb.x - player.x;
+                    const dy = orb.y - player.y;
+                    if (dx * dx + dy * dy < ORB_PICKUP_DIST * ORB_PICKUP_DIST) {
+                        // Pickup!
+                        if (orb.type === 'sword' && !player.hasSword) {
+                            player.hasSword = true;
+                            player.flashTimer = 1;
+                            player.flashColor = '#4488ff';
+                            spawnParticles(orb.x, orb.y, '#4488ff', 10, 4);
+                            orbs.splice(i, 1);
+                            break;
+                        } else if (orb.type === 'shield' && !player.hasShield) {
+                            player.hasShield = true;
+                            player.shieldAngle = getNearestEnemyAngle(player);
+                            player.flashTimer = 1;
+                            player.flashColor = '#ff8800';
+                            spawnParticles(orb.x, orb.y, '#ff8800', 10, 4);
+                            orbs.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        function checkCombat() {
+            for (let i = 0; i < players.length; i++) {
+                const attacker = players[i];
+                if (!attacker.alive || !attacker.swinging || !attacker.hasSword) continue;
+
+                // Sword tip position
+                const swAngle = attacker.swordBaseAngle - Math.PI * 0.75 + attacker.swingProgress;
+                const tipX = attacker.x + Math.cos(swAngle) * SWORD_LENGTH;
+                const tipY = attacker.y + Math.sin(swAngle) * SWORD_LENGTH;
+
+                for (let j = 0; j < players.length; j++) {
+                    if (i === j) continue;
+                    const target = players[j];
+                    if (!target.alive) continue;
+
+                    const dx = tipX - target.x;
+                    const dy = tipY - target.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < SHIELD_RADIUS + 4 && target.hasShield) {
+                        // Check if sword hit the shield arc
+                        const angleToTip = Math.atan2(tipY - target.y, tipX - target.x);
+                        let shieldDiff = angleToTip - target.shieldAngle;
+                        while (shieldDiff > Math.PI) shieldDiff -= Math.PI * 2;
+                        while (shieldDiff < -Math.PI) shieldDiff += Math.PI * 2;
+
+                        if (Math.abs(shieldDiff) < SHIELD_ARC) {
+                            // SHIELD BLOCK — both items shatter
+                            target.hasShield = false;
+                            attacker.hasSword = false;
+                            attacker.swinging = false;
+                            attacker.swingProgress = 0;
+
+                            // Massive knockback
+                            const kAngle = Math.atan2(attacker.y - target.y, attacker.x - target.x);
+                            attacker.vx += Math.cos(kAngle) * SHATTER_KNOCKBACK;
+                            attacker.vy += Math.sin(kAngle) * SHATTER_KNOCKBACK;
+                            target.vx -= Math.cos(kAngle) * SHATTER_KNOCKBACK * 0.6;
+                            target.vy -= Math.sin(kAngle) * SHATTER_KNOCKBACK * 0.6;
+
+                            // Shatter FX
+                            const hitX = (tipX + target.x) / 2;
+                            const hitY = (tipY + target.y) / 2;
+                            spawnShatterParticles(hitX, hitY, '#ff8800');
+                            spawnShatterParticles(hitX, hitY, '#4488ff');
+                            continue;
+                        }
+                    }
+
+                    // Sword vs Body
+                    if (dist < PLAYER_SIZE + 6) {
+                        attacker.score++;
+                        // Consume sword on kill
+                        attacker.hasSword = false;
+                        attacker.swinging = false;
+                        attacker.swingProgress = 0;
+
+                        killPlayer(target);
+                        spawnParticles(target.x, target.y, target.color, 18, 6);
+                        spawnParticles(target.x, target.y, '#ffffff', 6, 3);
+                    }
+                }
+            }
+        }
+
+        function killPlayer(player) {
+            player.alive = false;
+            player.hasSword = false;
+            player.hasShield = false;
+            player.swinging = false;
+            player.swingProgress = 0;
+            player.respawnTime = Date.now() + RESPAWN_DELAY;
+        }
+
+        function respawnPlayer(player) {
+            player.alive = true;
+            player.x = Math.random() * (canvas.width - 120) + 60;
+            player.y = Math.random() * (canvas.height - 120) + 60;
+            player.vx = 0;
+            player.vy = 0;
+            player.hasSword = false;
+            player.hasShield = false;
+            player.swinging = false;
+            player.swingProgress = 0;
+            player.flashTimer = 0;
+        }
+
+        // =========================================================
+        // RENDERING
+        // =========================================================
+
+        function drawGrid() {
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += GRID_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += GRID_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawOrbs(time) {
+            for (const orb of orbs) {
+                const pulse = Math.sin(time * 0.004 + orb.spawnTime) * 0.3 + 0.7;
+                const r = ORB_SIZE * pulse;
+
+                ctx.save();
+                ctx.translate(orb.x, orb.y);
+
+                if (orb.type === 'sword') {
+                    // Blue sword orb
+                    ctx.shadowBlur = 18;
+                    ctx.shadowColor = '#4488ff';
+                    ctx.strokeStyle = `rgba(68, 136, 255, ${0.6 + pulse * 0.4})`;
+                    ctx.lineWidth = 2.5;
+
+                    // Diamond shape
+                    ctx.beginPath();
+                    ctx.moveTo(0, -r);
+                    ctx.lineTo(r * 0.7, 0);
+                    ctx.lineTo(0, r);
+                    ctx.lineTo(-r * 0.7, 0);
+                    ctx.closePath();
+                    ctx.fillStyle = `rgba(20, 60, 140, 0.4)`;
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Tiny sword icon inside
+                    ctx.strokeStyle = '#88bbff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -r * 0.4);
+                    ctx.lineTo(0, r * 0.4);
+                    ctx.moveTo(-3, -r * 0.15);
+                    ctx.lineTo(3, -r * 0.15);
+                    ctx.stroke();
+                } else {
+                    // Orange shield orb
+                    ctx.shadowBlur = 18;
+                    ctx.shadowColor = '#ff8800';
+                    ctx.strokeStyle = `rgba(255, 136, 0, ${0.6 + pulse * 0.4})`;
+                    ctx.lineWidth = 2.5;
+
+                    // Circle shape
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(140, 60, 0, 0.4)`;
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Tiny shield icon inside
+                    ctx.strokeStyle = '#ffaa44';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r * 0.45, -Math.PI * 0.7, Math.PI * 0.7);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        function drawPlayer(player, time) {
+            if (!player.alive) return;
+
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // Glow
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = player.color;
+
+            // Flash on pickup
+            let strokeColor = player.color;
+            if (player.flashTimer > 0) {
+                const t = player.flashTimer;
+                strokeColor = player.flashColor;
+                ctx.shadowColor = player.flashColor;
+                ctx.shadowBlur = 25 * t;
+            }
+
+            // --- Draw shape ---
+            ctx.strokeStyle = strokeColor;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.lineWidth = 2.5;
+
+            if (player.shape === 'cursor') {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, PLAYER_SIZE * 1.5);
+                ctx.lineTo(PLAYER_SIZE * 0.55, PLAYER_SIZE * 1.05);
+                ctx.lineTo(PLAYER_SIZE * 0.85, PLAYER_SIZE * 1.7);
+                ctx.lineTo(PLAYER_SIZE * 1.1, PLAYER_SIZE * 1.5);
+                ctx.lineTo(PLAYER_SIZE * 0.85, PLAYER_SIZE * 0.85);
+                ctx.lineTo(PLAYER_SIZE * 1.4, PLAYER_SIZE * 0.75);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            } else if (player.shape === 'square') {
+                ctx.beginPath();
+                ctx.rect(-PLAYER_SIZE / 2, -PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
+                ctx.fill();
+                ctx.stroke();
+            } else if (player.shape === 'triangle') {
+                ctx.beginPath();
+                ctx.moveTo(0, -PLAYER_SIZE);
+                ctx.lineTo(PLAYER_SIZE, PLAYER_SIZE);
+                ctx.lineTo(-PLAYER_SIZE, PLAYER_SIZE);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            // --- Draw shield (if has one) ---
+            if (player.hasShield) {
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#ff8800';
+                ctx.strokeStyle = '#ff8800';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(0, 0, SHIELD_RADIUS,
+                    player.shieldAngle - SHIELD_ARC,
+                    player.shieldAngle + SHIELD_ARC);
+                ctx.stroke();
+
+                // Shield glow edge caps
+                const a1 = player.shieldAngle - SHIELD_ARC;
+                const a2 = player.shieldAngle + SHIELD_ARC;
+                ctx.fillStyle = '#ffaa44';
+                ctx.beginPath();
+                ctx.arc(Math.cos(a1) * SHIELD_RADIUS, Math.sin(a1) * SHIELD_RADIUS, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(Math.cos(a2) * SHIELD_RADIUS, Math.sin(a2) * SHIELD_RADIUS, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // --- Draw sword (if has one) ---
+            if (player.hasSword) {
+                let sAngle;
+                if (player.swinging) {
+                    sAngle = player.swordBaseAngle - Math.PI * 0.75 + player.swingProgress;
+                } else {
+                    // Idle sword: point toward nearest enemy
+                    sAngle = getNearestEnemyAngle(player);
+                }
+
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#4488ff';
+                ctx.strokeStyle = '#4488ff';
+                ctx.lineWidth = SWORD_WIDTH;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(sAngle) * SWORD_LENGTH, Math.sin(sAngle) * SWORD_LENGTH);
+                ctx.stroke();
+
+                // Sword tip glow
+                ctx.fillStyle = '#88ccff';
+                ctx.beginPath();
+                ctx.arc(Math.cos(sAngle) * SWORD_LENGTH, Math.sin(sAngle) * SWORD_LENGTH, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // --- Name label ---
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = `rgba(${hexToRgb(player.color)}, 0.5)`;
+            ctx.font = '10px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText(player.name, 0, -PLAYER_SIZE - 12);
+
+            ctx.restore();
+        }
+
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `${r},${g},${b}`;
+        }
+
+        function drawParticles() {
+            for (const p of particles) {
+                ctx.save();
+                ctx.globalAlpha = p.life;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = p.color;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+                ctx.restore();
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vx *= 0.96;
+                p.vy *= 0.96;
+                p.life -= p.decay;
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function drawScores() {
+            ctx.shadowBlur = 0;
+            ctx.font = 'bold 16px Courier New';
+            const pad = 16;
+
+            // P1 — top left
+            ctx.fillStyle = players[0].alive ? players[0].color : '#444';
+            ctx.textAlign = 'left';
+            ctx.fillText(`GHOST: ${players[0].score}`, pad, pad + 16);
+
+            // P2 — top right
+            ctx.fillStyle = players[1].alive ? players[1].color : '#444';
+            ctx.textAlign = 'right';
+            ctx.fillText(`TANK: ${players[1].score}`, canvas.width - pad, pad + 16);
+
+            // P3 — bottom right
+            ctx.fillStyle = players[2].alive ? players[2].color : '#444';
+            ctx.textAlign = 'right';
+            ctx.fillText(`STRIKER: ${players[2].score}`, canvas.width - pad, canvas.height - pad);
+        }
+
+        function drawHelpText(time) {
+            // Small controls hint at bottom left, fades after 8 seconds
+            const elapsed = time * 0.001;
+            if (elapsed > 12) return;
+            const alpha = elapsed < 8 ? 0.4 : 0.4 * (1 - (elapsed - 8) / 4);
+            if (alpha <= 0) return;
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#555';
+            ctx.font = '11px Courier New';
+            ctx.textAlign = 'left';
+            const lh = 15;
+            const bx = 16;
+            const by = canvas.height - 70;
+            ctx.fillText('P1 Ghost: Mouse + Click', bx, by);
+            ctx.fillText('P2 Tank:  WASD + Space', bx, by + lh);
+            ctx.fillText('P3 Striker: Arrows + Enter', bx, by + lh * 2);
+            ctx.fillText('ESC = Panic Mode', bx, by + lh * 3);
+            ctx.restore();
+        }
+
+        // Respawn ghost indicators
+        function drawRespawnIndicators(time) {
+            for (const player of players) {
+                if (player.alive) continue;
+                const remaining = player.respawnTime - Date.now();
+                if (remaining <= 0) continue;
+
+                const frac = remaining / RESPAWN_DELAY;
+                ctx.save();
+                ctx.globalAlpha = 0.3 + Math.sin(time * 0.008) * 0.15;
+                ctx.strokeStyle = player.color;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, PLAYER_SIZE + 8, 0, Math.PI * 2 * (1 - frac));
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.restore();
+            }
+        }
+
+        // =========================================================
+        // GAME LOOP
+        // =========================================================
+        function gameLoop(time) {
+            // Clear
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawGrid();
+
+            // Spawn orbs
+            if (Date.now() >= nextOrbSpawn) {
+                spawnOrb();
+                scheduleNextOrb();
+            }
+
+            // Update
+            for (const player of players) updatePlayer(player);
+            checkOrbPickups();
+            checkCombat();
+            updateParticles();
+
+            // Draw
+            drawOrbs(time);
+            drawParticles();
+            for (const player of players) drawPlayer(player, time);
+            drawRespawnIndicators(time);
+            drawScores();
+            drawHelpText(time);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        scheduleNextOrb();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
